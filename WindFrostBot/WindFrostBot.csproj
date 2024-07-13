@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <Target Name="MoveFilesToBin" AfterTargets="AfterBuild">
+    <!-- 指定要移动的文件类型，这里以 .dll 为例 -->
+    <ItemGroup>
+      <FilesToMove Include="$(OutputPath)*.dll;$(OutputPath)*.pdb" Exclude="$(OutputPath)WindFrostBot.dll;$(OutputPath)WindFrostBot.SDK.dll;$(OutputPath)Spectre.Console.dll" />
+    </ItemGroup>
+
+    <!-- 创建 bin 目录（如果不存在） -->
+    <MakeDir Directories="$(OutputPath)bin\" />
+
+    <!-- 移动文件到 bin 目录 -->
+    <Move SourceFiles="@(FilesToMove)" DestinationFolder="$(OutputPath)bin\" />
+
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WinFrostBot.SDK\WindFrostBot.SDK.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="JsonTool">
+      <HintPath>..\..\JsonTool\bin\Debug\net6.0\JsonTool.dll</HintPath>
+    </Reference>
+    <Reference Include="Spectre.Console">
+      <HintPath>..\..\..\Spectre.Console.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
