@@ -7,6 +7,7 @@ namespace WindFrostBot.SDK
     {
         public MessageEventArgs eventArgs { get; private set; }
         public int Type = 0;
+        public int seq = 1;
         public QCommand(MessageEventArgs eventArgs)
         {
             this.eventArgs = eventArgs;
@@ -16,11 +17,24 @@ namespace WindFrostBot.SDK
             switch(Type)
             {
                 case 0:
-                    MainSDK.QQClient.SendMessage(message,eventArgs);
+                    MainSDK.QQClient.SendMessage(message, eventArgs, seq);
+                    seq++;
                     break;
                 case 1:
                     break;
                 default:
+                    break;
+            }
+        }
+        public void SendImage(Image img)
+        {
+            switch (Type)
+            {
+                case 0:
+                    MainSDK.QQClient.SendMedia(eventArgs, img, seq);
+                    seq++;
+                    break;
+                case 1:
                     break;
             }
         }
@@ -29,7 +43,8 @@ namespace WindFrostBot.SDK
             switch (Type)
             {
                 case 0:
-                    MainSDK.QQClient.SendMedia(eventArgs, url);
+                    MainSDK.QQClient.SendMedia(eventArgs, url, seq);
+                    seq++;
                     break;
                 case 1:
                     break;

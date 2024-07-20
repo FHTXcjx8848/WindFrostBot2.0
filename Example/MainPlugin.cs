@@ -1,6 +1,6 @@
 ﻿using WindFrostBot.SDK;
 
-namespace ExamplePForWFBot
+namespace ExampleP
 {
     public class ExamplePlugin : Plugin
     {
@@ -26,13 +26,18 @@ namespace ExamplePForWFBot
 
         public override void OnLoad()
         {
-            CommandManager.InitGroupCommand(this, TestCommand, "测试指令", "测试");
-            CommandManager.InitGroupCommand(this, TestCommand1, "测试指令", "test");
-            CommandManager.InitGroupCommand(this, Upload, "测试指令", "upload");
+            CommandManager.InitGroupCommand(this, TestCommand, "测试指令", "pic", "/pic");
+            CommandManager.InitGroupCommand(this, TestCommand1, "测试指令", "test", "测试", "/test", "/测试");
         }
         public static void TestCommand1(CommandArgs args)
         {
-            args.Api.SendTextMessage("测试成功！");
+            string message = args.Message;
+            if(args.Parameters.Count > 0)
+            {
+                message += " " + string.Join(" ",args.Parameters);
+            }
+            args.Api.SendTextMessage(message);
+            //args.Api.SendTextMessage(message);
         }
         public static void TestCommand(CommandArgs args)
         {
@@ -40,16 +45,7 @@ namespace ExamplePForWFBot
             {
                 return;
             }
-            args.Api.SendImage(args.Parameters[0]);
-        }
-        public static void Upload(CommandArgs args)
-        {
-            if(args.Parameters.Count < 1)
-            {
-                return;
-            }
-            string url = MainSDK.QQClient.UploadFileToServer(args.Parameters[0]).Result;
-            Message.Info("上传:" + url);
+            args.Api.SendImage(MainSDK.QQClient.UploadFileToServer(args.Parameters[0]).Result);
         }
     }
 }

@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Net.Http;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Timers;
 using Newtonsoft.Json.Linq;
 using WindFrostBot.SDK;
-using static Google.Protobuf.Reflection.FieldOptions.Types;
 
 public class BotClient
 {
@@ -26,11 +25,24 @@ public class BotClient
         appId = appid;
         new Task(async () => { await Init(); }).Start();
     }
+    private static System.Timers.Timer _timer;
+    private static void SetTimer()
+    {
+        _timer = new System.Timers.Timer(90 * 60 * 1000);
+        _timer.Elapsed += async (sender, e) => await UpdateTokenAsync();
+        _timer.AutoReset = true;
+        _timer.Enabled = true;
+    }
 
+    private static async Task UpdateTokenAsync()
+    {
+        await GetAccessToken();
+    }
     public async Task Init()
     {
         await GetAccessToken();
         await ConnectWebSocket();
+        SetTimer();
     }
 
     public static async Task GetAccessToken()
@@ -167,7 +179,7 @@ public class BotClient
     {
         OnMessageReceived?.Invoke(this, e);
     }
-    public async void SendMessage(string message,MessageEventArgs args)
+    public async void SendMessage(string message,MessageEventArgs args,int seq = 1)
     {
         using (var client = new HttpClient())
         {
@@ -178,7 +190,8 @@ public class BotClient
             {
                 ["content"] = message,
                 ["msg_type"] = 0, // 文本消息
-                ["msg_id"] = args.MsgId
+                ["msg_id"] = args.MsgId,
+                ["msg_seq"] = seq
             };
             var content = new StringContent(postData.ToString(), Encoding.UTF8, "application/json");
 
@@ -188,7 +201,7 @@ public class BotClient
             Message.Info("Sent Message Response: " + responseString);
         }
     }
-    public async Task SendMedia(MessageEventArgs args, string fileUrl)
+    public async Task SendMedia(MessageEventArgs args, string fileUrl,int seq = 1)
     {
         try
         {
@@ -210,7 +223,8 @@ public class BotClient
                 {
                     ["file_type"] = 1,
                     ["url"] = fileUrl,
-                    ["srv_send_msg"] = false
+                    ["srv_send_msg"] = false,
+                    ["msg_seq"] = seq
                 };
 
                 var content = new StringContent(postData.ToString(), Encoding.UTF8, "application/json");
@@ -255,7 +269,87 @@ public class BotClient
             Message.Erro("Error: " + ex.Message);
         }
     }
+    public async Task SendMedia(MessageEventArgs args, Image img, int seq = 1)
+    {
+        try
+        {
+            string fileUrl = UploadImageToServer(img).Result;
 
+            using (var client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("QQBot", accessToken);
+                client.DefaultRequestHeaders.Add("X-Union-Appid", appId);
+
+                // Get file info for the uploaded file
+                var postData = new JObject
+                {
+                    ["file_type"] = 1,
+                    ["url"] = fileUrl,
+                    ["srv_send_msg"] = false,
+                    ["msg_seq"] = seq
+                };
+
+                var content = new StringContent(postData.ToString(), Encoding.UTF8, "application/json");
+                var response = await client.PostAsync($"https://api.sgroup.qq.com/v2/groups/{args.GroupOpenId}/files", content);
+                var responseString = await response.Content.ReadAsStringAsync();
+                var jsonResponse = JObject.Parse(responseString);
+
+                //Message.Info(responseString);
+
+                if (string.IsNullOrEmpty(jsonResponse["file_info"]?.Value<string>()))
+                {
+                    throw new Exception("Image upload failed: " + jsonResponse["message"]?.Value<string>());
+                }
+
+                string fileInfo = jsonResponse["file_info"]?.Value<string>();
+                if (string.IsNullOrEmpty(fileInfo))
+                {
+                    throw new Exception("Failed to retrieve file_info from the response.");
+                }
+
+                // Send media message to the group
+                var messageData = new JObject
+                {
+                    //["content"] = "", // Ensure content is not null or empty
+                    ["msg_id"] = args.MsgId,
+                    ["msg_type"] = 7,
+                    ["media"] = new JObject
+                    {
+                        ["file_info"] = fileInfo
+                    }
+                };
+
+                var messageContent = new StringContent(messageData.ToString(), Encoding.UTF8, "application/json");
+                var messageResponse = await client.PostAsync($"https://api.sgroup.qq.com/v2/groups/{args.GroupOpenId}/messages", messageContent);
+                var messageResponseString = await messageResponse.Content.ReadAsStringAsync();
+
+                Message.Info("Sent Media Message Response: " + messageResponseString);
+            }
+        }
+        catch (Exception ex)
+        {
+            Message.Erro("Error: " + ex.Message);
+        }
+    }
+    public async Task<string> UploadImageToServer(Image image)
+    {
+        using (var client = new HttpClient())
+        {
+            using (var ms = new MemoryStream())
+            {
+                image.Save(ms, ImageFormat.Jpeg);
+                var fileContent = new ByteArrayContent(ms.ToArray());
+                fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg");
+                var content = new MultipartFormDataContent();
+                content.Add(fileContent, "file", "wiki.jpg");
+                var response = await client.PostAsync(MainSDK.BotConfig.FileServerUrl, content);
+                response.EnsureSuccessStatusCode();
+                var responseString = await response.Content.ReadAsStringAsync();
+                var jsonResponse = JObject.Parse(responseString);
+                return jsonResponse["fileUrl"]?.ToString();
+            }
+        }
+    }
     public async Task<string> UploadFileToServer(string filePath)
     {
         using (var client = new HttpClient())
