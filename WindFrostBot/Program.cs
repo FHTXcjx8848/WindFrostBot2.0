@@ -45,6 +45,19 @@ namespace WindFrostBot
             for(; ;)
                 Console.ReadLine();
         }
+        /*
+        private static System.Timers.Timer _timer;
+        private static void SetTimer()
+        {
+            _timer = new System.Timers.Timer(60 * 1000);
+            _timer.Elapsed += Update;
+            _timer.Start();
+        }
+        public static void Update(object Sender, EventArgs e)
+        {
+            MainSDK.QQClient = new BotClient(MainSDK.BotConfig.AppID, MainSDK.BotConfig.Secret);
+        }
+        */
         public static  async void StartBot()
         {
             MainSDK.QQClient = new BotClient(MainSDK.BotConfig.AppID, MainSDK.BotConfig.Secret);

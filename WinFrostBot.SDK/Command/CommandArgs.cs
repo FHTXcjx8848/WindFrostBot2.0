@@ -44,7 +44,7 @@ namespace WindFrostBot.SDK
             client.OnMessageReceived += (sender, e) =>
             {
                 string text = e.Content.Substring(1);//接收的所有消息
-                string msg = text.Split(" ")[0].ToLower();//指令消息
+                string msg = text.Split(" ")[0].ToLower().Replace("/","");//指令消息
                 List<string> arg = text.Split(" ").ToList();
                 arg.Remove(text.Split(" ")[0]);//除去指令消息的其他段消息
                 var cmd = Coms.Find(c => c.Names.Contains(msg));

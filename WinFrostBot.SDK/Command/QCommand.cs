@@ -17,7 +17,7 @@ namespace WindFrostBot.SDK
             switch(Type)
             {
                 case 0:
-                    MainSDK.QQClient.SendMessage(message, eventArgs, seq);
+                    MainSDK.QQClient.SendMessage("\n" + message, eventArgs, seq);
                     seq++;
                     break;
                 case 1:

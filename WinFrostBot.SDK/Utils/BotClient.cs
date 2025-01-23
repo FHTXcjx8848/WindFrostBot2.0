@@ -1,10 +1,8 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Drawing.Imaging;
 using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Text;
-using System.Timers;
 using Newtonsoft.Json.Linq;
 using WindFrostBot.SDK;
 
@@ -25,15 +23,15 @@ public class BotClient
         appId = appid;
         new Task(async () => { await Init(); }).Start();
     }
+    /*
     private static System.Timers.Timer _timer;
     private static void SetTimer()
     {
-        _timer = new System.Timers.Timer(90 * 60 * 1000);
+        _timer = new System.Timers.Timer(30 * 1000);
         _timer.Elapsed += async (sender, e) => await UpdateTokenAsync();
-        _timer.AutoReset = true;
-        _timer.Enabled = true;
+        _timer.Start();
     }
-
+    */
     private static async Task UpdateTokenAsync()
     {
         await GetAccessToken();
@@ -42,7 +40,6 @@ public class BotClient
     {
         await GetAccessToken();
         await ConnectWebSocket();
-        SetTimer();
     }
 
     public static async Task GetAccessToken()
@@ -60,7 +57,7 @@ public class BotClient
             var tokenResponse = JObject.Parse(responseString);
             accessToken = tokenResponse["access_token"].ToString();
 
-            Message.Info($"Access Token: {accessToken}");
+            //Message.Info($"Access Token: {accessToken}");
         }
     }
 
@@ -70,7 +67,7 @@ public class BotClient
         await _webSocket.ConnectAsync(new Uri(gatewayUrl), CancellationToken.None);
         Message.Info("Connection opened.");
 
-        new Task(async() =>
+        new Task(async () =>
         {
             var buffer = new byte[1024 * 4];
             while (_webSocket.State == WebSocketState.Open)
@@ -78,11 +75,22 @@ public class BotClient
                 var result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                 var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
                 //Message.Info("Received Message: " + message);
-                ProcessMessage(JObject.Parse(message));
+                try
+                {
+                    var data = JObject.Parse(message);
+                    ProcessMessage(data);
+                }
+                catch
+                {
+                    Message.Info("Received Message: " + message);
+                    await ConnectWebSocket();
+                }
             }
         }, TaskCreationOptions.LongRunning).Start();
-
-        await StartHeartbeat();
+        new Task(async () =>
+        {
+            await StartHeartbeat();
+        }, TaskCreationOptions.LongRunning).Start();
     }
 
     public static async void SendIdentify()
@@ -181,6 +189,7 @@ public class BotClient
     }
     public async void SendMessage(string message,MessageEventArgs args,int seq = 1)
     {
+        await GetAccessToken();
         using (var client = new HttpClient())
         {
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("QQBot", accessToken);

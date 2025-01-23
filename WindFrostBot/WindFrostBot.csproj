@@ -32,10 +32,10 @@
 
   <ItemGroup>
     <Reference Include="JsonTool">
-      <HintPath>..\..\JsonTool\bin\Debug\net6.0\JsonTool.dll</HintPath>
+      <HintPath>..\..\..\JsonTool\bin\Debug\net6.0\JsonTool.dll</HintPath>
     </Reference>
     <Reference Include="Spectre.Console">
-      <HintPath>..\..\..\Spectre.Console.dll</HintPath>
+      <HintPath>..\..\..\..\Spectre.Console.dll</HintPath>
     </Reference>
   </ItemGroup>
 

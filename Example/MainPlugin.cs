@@ -26,8 +26,14 @@ namespace ExampleP
 
         public override void OnLoad()
         {
-            CommandManager.InitGroupCommand(this, TestCommand, "测试指令", "pic", "/pic");
-            CommandManager.InitGroupCommand(this, TestCommand1, "测试指令", "test", "测试", "/test", "/测试");
+            CommandManager.InitGroupCommand(this, TestCommand, "测试指令", "pic");
+            CommandManager.InitGroupCommand(this, TestCommand1, "测试指令", "test", "测试");
+            CommandManager.InitGroupCommand(this, TestCommand2, "测试指令", "test2", "测试2");
+        }
+        public static void TestCommand2(CommandArgs args)
+        {
+            string message = $"消息:{args.Message}\nAuthor:{args.eventArgs.Author}\nGroupOpenId:{args.eventArgs.GroupOpenId}\nMsgId:{args.eventArgs.MsgId}\nContent:{args.eventArgs.Content}";
+            args.Api.SendTextMessage(message);
         }
         public static void TestCommand1(CommandArgs args)
         {
