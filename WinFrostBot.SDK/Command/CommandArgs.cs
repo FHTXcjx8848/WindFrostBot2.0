@@ -22,27 +22,31 @@ namespace WindFrostBot.SDK
     public class CommandManager
     {
         public static List<Command> Coms = new List<Command>();
+        public static List<Command> PrivateComs = new List<Command>();
         public static void InitCommandToBot()
         {
             var client = MainSDK.QQClient;
             client.OnMessageReceived += (sender, e) =>
             {
-                string text = e.Content.Substring(1);//接收的所有消息
-                string msg = text.Split(" ")[0].ToLower().Replace("/", "");//指令消息
-                List<string> arg = text.Split(" ").ToList();
-                arg.Remove(text.Split(" ")[0]);//除去指令消息的其他段消息
-                var cmd = Coms.Find(c => c.Names.Contains(msg));
-                if (cmd != null)
+                if (!string.IsNullOrEmpty(e.Content))
                 {
-                    if (cmd.Type == 1)
+                    string text = e.Content;//接收的所有消息
+                    string msg = text.Split(" ")[0].ToLower().Replace("/", "");//指令消息
+                    List<string> arg = text.Split(" ").ToList();
+                    arg.Remove(text.Split(" ")[0]);//除去指令消息的其他段消息
+                    var cmd = PrivateComs.Find(c => c.Names.Contains(msg));
+                    if (cmd != null)
                     {
-                        try
+                        if (cmd.Type == 1)
                         {
-                            cmd.Run(msg, arg, new QCommand(e));
-                        }
-                        catch (Exception ex)
-                        {
-                            Message.LogErro(ex.Message);
+                            try
+                            {
+                                cmd.Run(msg, arg, new QCommand(e, 1));
+                            }
+                            catch (Exception ex)
+                            {
+                                Message.LogErro(ex.Message);
+                            }
                         }
                     }
                 }
@@ -79,8 +83,8 @@ namespace WindFrostBot.SDK
         public static void InitPrivateCommand(Plugin plugin, ComDelegate cmd, string cmdinfo, params string[] cmdnames)
         {
             Command com = new Command(cmd, cmdinfo, 1, cmdnames);
-            plugin.Commands.Add(com);
-            Coms.Add(com);
+            plugin.PrivateCommands.Add(com);
+            PrivateComs.Add(com);
         }
     }
     public class Command

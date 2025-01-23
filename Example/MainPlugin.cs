@@ -46,7 +46,6 @@ namespace ExampleP
                 message += " " + string.Join(" ",args.Parameters);
             }
             args.Api.SendTextMessage(message);
-            //args.Api.SendTextMessage(message);
         }
         public static void TestCommand(CommandArgs args)
         {

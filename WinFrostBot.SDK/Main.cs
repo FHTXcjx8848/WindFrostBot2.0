@@ -12,6 +12,7 @@ namespace WindFrostBot.SDK
     public abstract class Plugin
     {
         public List<Command> Commands = new List<Command>();
+        public List<Command> PrivateCommands = new List<Command>();
         public abstract string PluginName();
         public abstract string Version();
         public abstract string Author();

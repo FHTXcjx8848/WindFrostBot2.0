@@ -8,9 +8,10 @@ namespace WindFrostBot.SDK
         public MessageEventArgs eventArgs { get; private set; }
         public int Type = 0;
         public int seq = 1;
-        public QCommand(MessageEventArgs eventArgs)
+        public QCommand(MessageEventArgs eventArgs , int type = 0)
         {
             this.eventArgs = eventArgs;
+            this.Type = type;
         }
         public void SendTextMessage(string message)
         {
@@ -21,7 +22,7 @@ namespace WindFrostBot.SDK
                     seq++;
                     break;
                 case 1:
-                    MainSDK.QQClient.SendMessage("\n" + message, eventArgs, seq);
+                    MainSDK.QQClient.SendMessage(message, eventArgs, seq);
                     seq++;
                     break;
                 default:
