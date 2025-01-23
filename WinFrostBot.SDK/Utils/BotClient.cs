@@ -23,15 +23,6 @@ public class BotClient
         appId = appid;
         new Task(async () => { await Init(); }).Start();
     }
-    /*
-    private static System.Timers.Timer _timer;
-    private static void SetTimer()
-    {
-        _timer = new System.Timers.Timer(30 * 1000);
-        _timer.Elapsed += async (sender, e) => await UpdateTokenAsync();
-        _timer.Start();
-    }
-    */
     private static async Task UpdateTokenAsync()
     {
         await GetAccessToken();
@@ -66,7 +57,7 @@ public class BotClient
         _webSocket = new ClientWebSocket();
         await _webSocket.ConnectAsync(new Uri(gatewayUrl), CancellationToken.None);
         Message.Info("Connection opened.");
-
+        SendIdentify();//发送鉴定
         new Task(async () =>
         {
             var buffer = new byte[1024 * 4];
@@ -83,13 +74,10 @@ public class BotClient
                 catch
                 {
                     Message.Info("Received Message: " + message);
+                    _webSocket.Dispose();
                     await ConnectWebSocket();
                 }
             }
-        }, TaskCreationOptions.LongRunning).Start();
-        new Task(async () =>
-        {
-            await StartHeartbeat();
         }, TaskCreationOptions.LongRunning).Start();
     }
 
@@ -116,38 +104,55 @@ public class BotClient
         Message.Info("Identify sent.");
     }
 
-    private void ProcessMessage(JObject message)
+    private async void ProcessMessage(JObject message)
     {
         int op = message["op"].Value<int>();
         switch (op)
         {
-            case 10:
+            case 10://心跳包
                 heartbeatInterval = message["d"]["heartbeat_interval"].Value<int>();
-                SendIdentify();
+                var heartbeatPayload = new JObject
+                {
+                    ["op"] = 1,
+                    ["d"] = sequenceNumber
+                };
+                await SendMessageAsync(heartbeatPayload.ToString());
                 break;
-            case 0:
+            case 0://群聊消息
                 sequenceNumber = message["s"].Value<int>();
                 string eventType = message["t"].Value<string>();
-                if (eventType == "READY")
+                switch (eventType)
                 {
-                    sessionId = message["d"]["session_id"].Value<string>();
-                }
-                else if (eventType == "GROUP_AT_MESSAGE_CREATE")
-                {
-                    HandleGroupAtMessageCreate(message["d"]);
+                    case "READY"://准备完成后的事件
+                        sessionId = message["d"]["session_id"].Value<string>();
+                        break;
+                    case "GROUP_AT_MESSAGE_CREATE"://群消息事件
+                        HandleGroupAtMessageCreate(message["d"]);
+                        break;
+                    case "GROUP_ADD_ROBOT"://机器人被添加到群的事件
+                        break;
+                    case "GROUP_DEL_ROBOT"://机器人被移除群聊事件
+                        break;
+                    case "GROUP_MSG_REJECT"://群聊主动消息关闭事件
+                        break;
+                    case "GROUP_MSG_RECEIVE"://群聊主动消息开启事件
+                        break;
+                    case "FRIEND_ADD"://私聊好友添加事件
+                        break;
+                    case "FRIEND_DEL"://私聊好友删除事件
+                        break;
                 }
                 break;
-            case 9:
+            case 9://处理无效的会话
                 Message.Info("Received INVALID_SESSION");
-                // 处理无效的会话，例如重新连接
                 // await ConnectWebSocket();
                 break;
             case 11:
-                //Message.Info("Heartbeat acknowledged.");
+                //心跳包成功后返回
                 break;
         }
     }
-
+    /*
     public static async Task StartHeartbeat()
     {
         while (_webSocket.State == WebSocketState.Open)
@@ -163,14 +168,13 @@ public class BotClient
             await Task.Delay(heartbeatInterval);
         }
     }
-
+    */
     public static async Task SendMessageAsync(string message)
     {
         var messageBuffer = Encoding.UTF8.GetBytes(message);
         await _webSocket.SendAsync(new ArraySegment<byte>(messageBuffer), WebSocketMessageType.Text, true, CancellationToken.None);
     }
-
-    public void HandleGroupAtMessageCreate(JToken data)
+    public void HandleGroupAtMessageCreate(JToken data)//处理群聊被动消息部分
     {
         var author = data["author"]["member_openid"].Value<string>();
         var content = data["content"].Value<string>();

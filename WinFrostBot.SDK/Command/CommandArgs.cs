@@ -9,22 +9,6 @@ namespace WindFrostBot.SDK
         public string Message { get; private set; }
         public List<string> Parameters { get; private set; }
         public MessageEventArgs eventArgs { get; private set; }
-        public bool IsOwnner()
-        {
-            //if (MainSDK.BotConfig.Owners.Contains(Account))
-            //{
-                //return true;
-            //}
-            return false;
-        }
-        public bool IsAdmin()
-        {
-            //if (MainSDK.BotConfig.Owners.Contains(Account) || MainSDK.BotConfig.Admins.Contains(Account))
-            //{
-                //return true;
-            //}
-            return false;
-        }
         public QCommand Api { get; private set; }
         public CommandArgs(string msg,List<string> args, QCommand cmd)
         {

@@ -15,8 +15,5 @@ namespace WindFrostBot.SDK
         public string MySqlDbName = "";
         public string MySqlUsername = "";
         public string MySqlPassword = "";
-        public List<long> Admins = new List<long>();
-        public List<long> Owners = new List<long>();
-        public List<long> QGroups = new List<long>();
     }
 }
