@@ -17,10 +17,12 @@ namespace WindFrostBot.SDK
             switch(Type)
             {
                 case 0:
-                    MainSDK.QQClient.SendMessage("\n" + message, eventArgs, seq);
+                    MainSDK.QQClient.SendGroupMessage("\n" + message, eventArgs, seq);
                     seq++;
                     break;
                 case 1:
+                    MainSDK.QQClient.SendMessage("\n" + message, eventArgs, seq);
+                    seq++;
                     break;
                 default:
                     break;
@@ -31,7 +33,7 @@ namespace WindFrostBot.SDK
             switch (Type)
             {
                 case 0:
-                    MainSDK.QQClient.SendMedia(eventArgs, img, seq);
+                    MainSDK.QQClient.SendGroupMedia(eventArgs, img, seq);
                     seq++;
                     break;
                 case 1:
@@ -43,7 +45,7 @@ namespace WindFrostBot.SDK
             switch (Type)
             {
                 case 0:
-                    MainSDK.QQClient.SendMedia(eventArgs, url, seq);
+                    MainSDK.QQClient.SendGroupMedia(eventArgs, url, seq);
                     seq++;
                     break;
                 case 1:

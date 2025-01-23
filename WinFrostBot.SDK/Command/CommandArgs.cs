@@ -28,6 +28,28 @@ namespace WindFrostBot.SDK
             client.OnMessageReceived += (sender, e) =>
             {
                 string text = e.Content.Substring(1);//接收的所有消息
+                string msg = text.Split(" ")[0].ToLower().Replace("/", "");//指令消息
+                List<string> arg = text.Split(" ").ToList();
+                arg.Remove(text.Split(" ")[0]);//除去指令消息的其他段消息
+                var cmd = Coms.Find(c => c.Names.Contains(msg));
+                if (cmd != null)
+                {
+                    if (cmd.Type == 1)
+                    {
+                        try
+                        {
+                            cmd.Run(msg, arg, new QCommand(e));
+                        }
+                        catch (Exception ex)
+                        {
+                            Message.LogErro(ex.Message);
+                        }
+                    }
+                }
+            };
+            client.OnGroupMessageReceived += (sender, e) =>
+            {
+                string text = e.Content.Substring(1);//接收的所有消息
                 string msg = text.Split(" ")[0].ToLower().Replace("/","");//指令消息
                 List<string> arg = text.Split(" ").ToList();
                 arg.Remove(text.Split(" ")[0]);//除去指令消息的其他段消息

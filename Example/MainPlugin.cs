@@ -29,6 +29,9 @@ namespace ExampleP
             CommandManager.InitGroupCommand(this, TestCommand, "测试指令", "pic");
             CommandManager.InitGroupCommand(this, TestCommand1, "测试指令", "test", "测试");
             CommandManager.InitGroupCommand(this, TestCommand2, "测试指令", "test2", "测试2");
+            CommandManager.InitPrivateCommand(this, TestCommand1, "测试指令", "test", "测试");
+            CommandManager.InitPrivateCommand(this, TestCommand2, "测试指令", "test2", "测试2");
+
         }
         public static void TestCommand2(CommandArgs args)
         {
